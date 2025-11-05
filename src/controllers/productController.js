@@ -3,7 +3,18 @@ import Product from "../models/productModel.js";
 // Create Product
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, image, category, stock } = req.body;
+    const {
+      name,
+      description,
+      category,
+      gender,
+      price,
+      sizes,
+      colors,
+      image,
+      inStock,
+      rating
+    } = req.body;
 
     if (!name || !price) {
       return res.status(400).json({ message: "Name and price are required" });
@@ -12,12 +23,15 @@ export const createProduct = async (req, res) => {
     const product = await Product.create({
       name,
       description,
-      price,
-      image,
       category,
-      stock,
+      gender,
+      price,
+      sizes,
+      colors,
+      image,
+      inStock,
+      rating
     });
-
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
