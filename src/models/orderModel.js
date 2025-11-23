@@ -14,11 +14,10 @@ const orderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-        quantity: {
-          type: Number,
-          required: true,
-          min: 1,
-        },
+        quantity: { type: Number, required: true, min: 1 },
+        size: { type: String, required: true },  
+        color: { type: String, required: true },
+        price: { type: Number, required: true },
       },
     ],
     shippingInfo: {
@@ -28,13 +27,10 @@ const orderSchema = new mongoose.Schema(
       phone: { type: String, required: true },
       paymentMethod: { type: String, default: "cod" },
     },
-    totalPrice: {
-      type: Number,
-      required: true,
-    },
+    totalPrice: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["Pending", "Processing", "Shipped", "Delivered"],
+      enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
       default: "Pending",
     },
   },
