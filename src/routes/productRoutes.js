@@ -5,9 +5,10 @@ import {
   getProductById,
   updateProduct,
   deleteProduct,
+  createProductReview,
 } from "../controllers/productController.js";
 
-import {protect, admin} from "../middleware/authMiddleware.js"
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -15,7 +16,10 @@ const router = express.Router();
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 
-// 🔒 Protected routes (admin only)
+// Review Route (Protected, Users can review)
+router.post("/:id/reviews", protect, createProductReview);
+
+// Protected routes (admin only)
 router.post("/", protect, admin, createProduct);
 router.put("/:id", protect, admin, updateProduct);
 router.delete("/:id", protect, admin, deleteProduct);
