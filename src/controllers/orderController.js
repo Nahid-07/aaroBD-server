@@ -56,6 +56,9 @@ export const updateOrderStatus = async (req, res) => {
     if (order) {
       order.status = req.body.status || order.status;
       const updatedOrder = await order.save();
+      await updatedOrder.populate("user", "name email");
+      await updatedOrder.populate("items.product", "name price image");
+
       res.json(updatedOrder);
     } else {
       res.status(404).json({ message: "Order not found" });
