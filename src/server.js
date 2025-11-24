@@ -24,6 +24,10 @@ app.use("/api/orders", orderRoutes);
 
 // DB + Server
 const PORT = process.env.PORT || 5000;
+app.use(cors({
+  origin: ["http://localhost:5173", "https://your-vercel-app.vercel.app"],
+  credentials: true
+}));
 
 connectDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
