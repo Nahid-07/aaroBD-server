@@ -38,11 +38,57 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// Get All Products
+// Get All Products (with Pagination & Filters)
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find({});
-    res.status(200).json(products);
+    const pageSize = 8; // Number of products per page
+    const page = Number(req.query.page) || 1;
+
+    // 1. Search Filter (by Name)
+    const keyword = req.query.keyword
+      ? {
+          name: {
+            $regex: req.query.keyword,
+            $options: "i", // Case insensitive
+          },
+        }
+      : {};
+
+    // 2. Category Filter
+    const category =
+      req.query.category && req.query.category !== "All"
+        ? { category: req.query.category }
+        : {};
+
+    // 3. Gender Filter
+    const gender =
+      req.query.gender && req.query.gender !== "All"
+        ? { gender: req.query.gender }
+        : {};
+
+    // 4. Sorting Logic
+    let sort = { createdAt: -1 }; // Default: Newest first
+    if (req.query.sort === "lowToHigh") sort = { price: 1 };
+    if (req.query.sort === "highToLow") sort = { price: -1 };
+
+    // Combine all filters
+    const query = { ...keyword, ...category, ...gender };
+
+    // Get Total Count (for pagination)
+    const count = await Product.countDocuments(query);
+
+    // Fetch Actual Data
+    const products = await Product.find(query)
+      .sort(sort)
+      .limit(pageSize)
+      .skip(pageSize * (page - 1));
+
+    res.json({
+      products,
+      page,
+      pages: Math.ceil(count / pageSize),
+      totalProducts: count,
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch products" });
   }
