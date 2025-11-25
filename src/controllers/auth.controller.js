@@ -1,4 +1,4 @@
-import User from "../models/userModel.js"
+import User from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 
 // Register User
@@ -44,5 +44,57 @@ export const loginUser = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Google Auth Controller
+export const googleAuth = async (req, res) => {
+  try {
+    const { token } = req.body;
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+    // Verify the token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const { name, email, picture } = ticket.getPayload();
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Login existing user
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+      });
+    } else {
+      // Register new user with a random password
+      const randomPassword =
+        Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).slice(-8);
+
+      user = await User.create({
+        name,
+        email,
+        password: randomPassword,
+      });
+
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+      });
+    }
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    res.status(400).json({ message: "Google Authentication Failed" });
   }
 };
