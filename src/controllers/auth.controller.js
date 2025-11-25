@@ -1,5 +1,6 @@
 import User from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
+import { OAuth2Client } from "google-auth-library";
 
 // Register User
 export const registerUser = async (req, res) => {
@@ -17,7 +18,7 @@ export const registerUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      isAdmin: user.isAdmin, // <--- ADD THIS LINE
+      isAdmin: user.isAdmin,
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -51,12 +52,8 @@ export const loginUser = async (req, res) => {
 export const googleAuth = async (req, res) => {
   try {
     const { token } = req.body;
-    
-    // 1. Debug: Log the received token (first 20 chars for safety)
-    console.log("Received Google Token:", token ? token.substring(0, 20) + "..." : "No Token");
 
     if (!process.env.GOOGLE_CLIENT_ID) {
-      console.error("❌ GOOGLE_CLIENT_ID is missing in backend .env");
       return res.status(500).json({ message: "Server configuration error" });
     }
 
@@ -69,11 +66,8 @@ export const googleAuth = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    
-    // 3. Debug: Log the payload from Google
-    console.log("Google Payload:", { email: payload.email, name: payload.name });
 
-    const { name, email, picture } = payload;
+    const { name, email } = payload;
 
     // Check if user exists
     let user = await User.findOne({ email });
@@ -88,15 +82,15 @@ export const googleAuth = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      console.log("User not found, registering new user:", email);
       // Register new user
-      const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-      
+      const randomPassword =
+        Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).slice(-8);
+
       user = await User.create({
         name,
         email,
         password: randomPassword,
-        // You can save 'picture' if you update your User model schema
       });
 
       res.status(201).json({
@@ -108,7 +102,8 @@ export const googleAuth = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("❌ Google Auth Error:", error.message); // Log the specific error
-    res.status(400).json({ message: "Google Authentication Failed: " + error.message });
+    res
+      .status(400)
+      .json({ message: "Google Authentication Failed: " + error.message });
   }
 };
