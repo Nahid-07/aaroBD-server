@@ -1,5 +1,6 @@
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
+import sendEmail from "../utils/sendEmail.js";
 
 // Create a new order
 export const createOrder = async (req, res) => {
@@ -11,6 +12,7 @@ export const createOrder = async (req, res) => {
     }
 
     // 1. Validate Stock & Decrement
+    // We do this loop to ensure we don't sell what we don't have
     for (const item of items) {
       const product = await Product.findById(item.product);
       
@@ -34,6 +36,28 @@ export const createOrder = async (req, res) => {
       shippingInfo,
       totalPrice,
     });
+
+    // 3. 📧 Send Confirmation Email
+    const message = `
+      <h1>Thank you for your order, ${req.user.name}!</h1>
+      <p>Your order <strong>#${order._id}</strong> has been placed successfully.</p>
+      <p><strong>Total Amount:</strong> ৳${totalPrice}</p>
+      <p><strong>Payment Method:</strong> ${shippingInfo.paymentMethod.toUpperCase()}</p>
+      <br/>
+      <p>We will notify you when your item is shipped.</p>
+      <p>Regards,<br/>AaroShop Team</p>
+    `;
+
+    try {
+      await sendEmail({
+        email: req.user.email,
+        subject: "Order Confirmation - AaroShop",
+        message,
+      });
+    } catch (error) {
+      console.error("Email could not be sent:", error);
+      // Don't crash the request if email fails, just log it
+    }
 
     res.status(201).json(order);
   } catch (error) {
